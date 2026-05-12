@@ -13,20 +13,29 @@ exports.handler = async (event) => {
   try {
     const { prompt } = JSON.parse(event.body);
 
-    const res = await fetch('https://api.x.ai/v1/chat/completions', {
+    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + process.env.GROK_API_KEY
+        'Authorization': 'Bearer ' + process.env.GROQ_API_KEY
       },
       body: JSON.stringify({
-        model: 'grok-3',
+        model: 'llama-3.3-70b-versatile',
         max_tokens: 2000,
         messages: [{ role: 'user', content: prompt }]
       })
     });
 
     const data = await res.json();
+
+    if (!res.ok || !data.choices || !data.choices[0]) {
+      return {
+        statusCode: 500,
+        headers: { 'Access-Control-Allow-Origin': '*' },
+        body: JSON.stringify({ error: data.error?.message || 'Groq API failed' })
+      };
+    }
+
     const text = data.choices[0].message.content;
 
     return {
